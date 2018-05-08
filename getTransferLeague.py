@@ -1,6 +1,8 @@
 import requests
 import sys
 from bs4 import BeautifulSoup
+import time
+
 headers = {'User-Agent': 
            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
 
@@ -10,7 +12,9 @@ page = "https://www.transfermarkt.com/campeonato-brasileiro-serie-a/transfers/we
 def removeWriteSpaces(text):
 	return text.encode('utf-8').replace("\n", "").replace("\t", "").replace("\r", "")
 
-def getInformationTransfer(pageSoup):
+def getInformationTransfer(pageSoup, count, club):
+
+	#get information
 	player = pageSoup.find_all("span", {"class": "hide-for-small"})
 	age = pageSoup.find_all("td", {"class": "zentriert alter-transfer-cell"})
 	country = pageSoup.find_all("td", {"class": "zentriert nat-transfer-cell"})
@@ -18,37 +22,63 @@ def getInformationTransfer(pageSoup):
 	to = pageSoup.find_all("td", {"class": "no-border-links verein-flagge-transfer-cell"})
 	valueTransfer = pageSoup.find_all("td", {"class": "rechts"})
 
+#	print "Name" + str(len(player))
+#	print "Age" + str(len(age))
+#	print "Country" + str(len(country))
+#	print "Position" + str(len(position))
+#	print "Value" + str(len(to))
+#	print "To" + str(len(valueTransfer))
+#	while (i < 0):
+#		print "------------Player-------------"
+#		print "Name: " + removeWriteSpaces(player[i].text)
+#		print "Age: " + removeWriteSpaces(age[i].text)
+#		print "Country: " + removeWriteSpaces(country[i].findChildren('img')[0]['alt'])
+#		print "Position: " + removeWriteSpaces(position[i].text)
+#		print "ValueMarket: " + removeWriteSpaces(valueTransfer[2*i].text)
+#		print "to: " + removeWriteSpaces(to[i].text)
+#		print "ValueTransfer: " + removeWriteSpaces(valueTransfer[2*i + 1].text)
+#		print "\n"
+#		i = i + 1
 
+	#Write in csv file
 	i = 0
-	while (i < 5):
-		print "------------Player-------------"
-		print "Name: " + removeWriteSpaces(player[i].text)
-		print "Age: " + removeWriteSpaces(age[i].text)
-		print "Country: " + removeWriteSpaces(country[i].findChildren('img')[0]['alt'])
-		print "Position: " + removeWriteSpaces(position[i].text)
-		print "ValueMarket: " + removeWriteSpaces(valueTransfer[2*i].text)
-		print "to: " + removeWriteSpaces(to[i].text)
-		print "ValueTransfer: " + removeWriteSpaces(valueTransfer[2*i + 1].text)
-		print "\n"
-		i = i + 1
+	with open("teste.csv", "a") as file:
+		while (i < len(age)):
+			file.write(removeWriteSpaces(player[i].text) + ";")
+			file.write(removeWriteSpaces(age[i].text) + ";")
+			file.write(removeWriteSpaces(country[i].findChildren('img')[0]['alt']) + ";")
+			file.write(removeWriteSpaces(position[i].text) + ";")
+			file.write(removeWriteSpaces(valueTransfer[2*i].text) + ";")
+			
+			if count == 1:
+				file.write(removeWriteSpaces(club) + ";")
+				file.write(removeWriteSpaces(to[i].text) + ";")
+			else:
+				file.write(removeWriteSpaces(to[i].text) + ";")
+				file.write(removeWriteSpaces(club) + ";")
+			
+			file.write(removeWriteSpaces(valueTransfer[2*i + 1].text) + "\n")
+			i = i + 1
+			print i
 
-def getClub(pageSoup):
-	club = pageSoup.find_all("div", {"class": "table-header"})
-	print "oie"
-	for a in club:
-		if "Transfer" not in removeWriteSpaces(a.text):
-			print removeWriteSpaces(a.text)
-	getInformationTransfer(pageSoup)
 
+## init in table[4]
+def getTable_and_Club(pageSoup):
+	tableBox = pageSoup.find_all("div", {"class": "box"})
+	club = tableBox[4].find_all("div", {"class": "table-header"})
+	print "Club:" + club[0].text
 
-def getTbody(pageSoup):
-	table = pageSoup.find_all("div", {"class": "box"})
-#	with open("output1.html", "w") as file:
-#		file.write(str(table[10]))
-	getClub(table[10])
+	beginTable = tableBox[4].find_all("table")
+	print len(beginTable)
+
+	count = 0
+	for i in beginTable:
+		getInformationTransfer(i, count, club[0].text)
+		count = count + 1
+
 ############################## Main #########################
+with open("teste.csv", "a") as file:
+	file.write("Player;Age;Country;Position;MarketValue;De;Para;TransferValue\n")
 pageTree = requests.get(page, headers=headers)
 pageSoup = BeautifulSoup(pageTree.content, 'html.parser')
-#getInformationTransfer(pageSoup)
-#getClub(pageSoup)
-getTbody(pageSoup)
+getTable_and_Club(pageSoup)
