@@ -65,16 +65,20 @@ def getInformationTransfer(pageSoup, count, club):
 ## init in table[4]
 def getTable_and_Club(pageSoup):
 	tableBox = pageSoup.find_all("div", {"class": "box"})
-	club = tableBox[4].find_all("div", {"class": "table-header"})
-	print "Club:" + club[0].text
 
-	beginTable = tableBox[4].find_all("table")
-	print len(beginTable)
+	for i in range (4,len(tableBox)):
+		try:
+			club = tableBox[i].find_all("div", {"class": "table-header"})
+			print "Club:" + club[0].text
 
-	count = 0
-	for i in beginTable:
-		getInformationTransfer(i, count, club[0].text)
-		count = count + 1
+			beginTable = tableBox[i].find_all("table")
+
+			count = 0
+			for j in beginTable:
+				getInformationTransfer(j, count, club[0].text)
+				count = count + 1
+		except:
+			pass
 
 ############################## Main #########################
 with open("teste.csv", "a") as file:
